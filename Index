@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Great Globe Quiz</title>
+    <style>
+        :root {
+            --bg-color: #1a120b; 
+            --paper-color: #f7e7ce; 
+            --ink-color: #3e2723; 
+            --gold-accent: #d4af37; 
+            --correct-green: #2ecc71;
+            --wrong-red: #e74c3c;
+            --shadow-fx: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=IM+Fell+English+SC&display=swap');
+
+        body {
+            background-color: var(--bg-color);
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48ZyBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM4YjZkNDYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTAgMGg0MHY0MEgwVjB6bTIwIDIwaDIwdjIwSDIWMjB6TTAgMjBoMjB2MjBIMFYyMHoyMCAwaDIwdjIwSDIwVjB6Ii8+PC9nPjwvZz48L3N2Zz4=');
+            color: var(--ink-color);
+            font-family: 'IM Fell English SC', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #quiz-container {
+            background: var(--paper-color);
+            width: 90%;
+            max-width: 850px;
+            padding: 30px;
+            border: 15px solid #d4af37;
+            box-shadow: var(--shadow-fx);
+            text-align: center;
+            position: relative;
+        }
+
+        h1 { font-family: 'Cinzel', serif; color: var(--gold-accent); margin-top: 0; text-shadow: 1px 1px 2px #000; }
+
+        #stats-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--ink-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        #question-text { font-size: 1.8rem; margin: 20px 0; min-height: 80px; }
+
+        #answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .answer-btn {
+            background-color: var(--ink-color);
+            color: var(--paper-color);
+            border: 2px solid var(--gold-accent);
+            padding: 15px;
+            font-size: 1.2rem;
+            font-family: 'IM Fell English SC', serif;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .answer-btn:hover { background-color: #5d4037; }
+        .correct-answer { background-color: var(--correct-green) !important; color: white !important; }
+        .wrong-answer { background-color: var(--wrong-red) !important; color: white !important; }
+
+        .hidden { display: none !important; }
+        #next-btn {
+            margin-top: 20px;
+            background: var(--gold-accent);
+            padding: 10px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border: none;
+            font-family: 'Cinzel', serif;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="quiz-container">
+        <h1>~ Shakespeare's Challenge ~</h1>
+        <div id="stats-bar">
+            <div>Act: <span id="current-num">1</span>/50</div>
+            <div>Gold: <span id="score-display">0</span></div>
+            <div>Time: <span id="timer">20</span>s</div>
+        </div>
+
+        <div id="game-body">
+            <div id="question-text">Loading scroll...</div>
+            <div id="answers-grid">
+                <button class="answer-btn" onclick="checkAnswer(0)">A</button>
+                <button class="answer-btn" onclick="checkAnswer(1)">B</button>
+                <button class="answer-btn" onclick="checkAnswer(2)">C</button>
+                <button class="answer-btn" onclick="checkAnswer(3)">D</button>
+            </div>
+            <div id="feedback-area" class="hidden">
+                <h2 id="feedback-message"></h2>
+                <button id="next-btn" onclick="loadNextQuestion()">Next Question →</button>
+            </div>
+        </div>
+
+        <div id="results-screen" class="hidden">
+            <h2>The Curtain Falls</h2>
+            <p id="final-score-text" style="font-size: 2rem;"></p>
+            <button id="next-btn" onclick="location.reload()">Replay Play</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            { question: "In which play does the line “The readiness is all” appear?", answers: ["Macbeth", "Hamlet", "King Lear", "Othello"], correct: 1 },
+            { question: "What is the name of Prospero’s servant spirit in The Tempest?", answers: ["Caliban", "Ariel", "Oberon", "Puck"], correct: 1 },
+            { question: "Which Shakespeare play features the character Autolycus?", answers: ["Cymbeline", "The Winter’s Tale", "Much Ado About Nothing", "Pericles"], correct: 1 },
+            { question: "What is the setting of Twelfth Night?", answers: ["Verona", "Illyria", "Venice", "Athens"], correct: 1 },
+            { question: "Who says: “Hell is empty and all the devils are here”?", answers: ["Ariel", "Prospero", "Caliban", "Ferdinand"], correct: 0 },
+            { question: "Which play includes the line “Some are born great…”?", answers: ["As You Like It", "Twelfth Night", "Measure for Measure", "All’s Well That Ends Well"], correct: 1 },
+            { question: "What is the name of Hamlet’s university?", answers: ["Oxford", "Cambridge", "Wittenberg", "Padua"], correct: 2 },
+            { question: "In Othello, what is Iago’s wife called?", answers: ["Bianca", "Emilia", "Desdemona", "Cassia"], correct: 1 },
+            { question: "Which play features the character Sir Toby Belch?", answers: ["Twelfth Night", "The Merry Wives of Windsor", "Much Ado About Nothing", "Love’s Labour’s Lost"], correct: 0 },
+            { question: "What is the name of King Lear’s fool?", answers: ["Touchstone", "Feste", "He has no name", "Yorick"], correct: 2 },
+            { question: "Which tragedy begins with a storm and shipwreck?", answers: ["King Lear", "Macbeth", "The Tempest", "Othello"], correct: 2 },
+            { question: "Who kills Tybalt in Romeo and Juliet?", answers: ["Romeo", "Mercutio", "Benvolio", "Paris"], correct: 0 },
+            { question: "What is Macbeth’s castle called?", answers: ["Dunsinane", "Inverness", "Glamis", "Cawdor"], correct: 1 },
+            { question: "Which play features the “seven ages of man” speech?", answers: ["As You Like It", "Hamlet", "King Lear", "The Tempest"], correct: 0 },
+            { question: "Who disguises herself as a lawyer in The Merchant of Venice?", answers: ["Nerissa", "Portia", "Jessica", "Gratiana"], correct: 1 },
+            { question: "What is Shylock’s profession?", answers: ["Merchant", "Lawyer", "Moneylender", "Banker"], correct: 2 },
+            { question: "In Macbeth, who becomes king after Macbeth?", answers: ["Donalbain", "Malcolm", "Fleance", "Macduff"], correct: 1 },
+            { question: "Which play includes the character Falstaff?", answers: ["Henry IV", "Richard II", "Henry V", "King John"], correct: 0 },
+            { question: "What is the name of Ophelia’s brother?", answers: ["Claudius", "Laertes", "Polonius", "Fortinbras"], correct: 1 },
+            { question: "Which play contains the line “Cry havoc!”?", answers: ["Julius Caesar", "Macbeth", "Hamlet", "Coriolanus"], correct: 0 },
+            { question: "Who is the Roman general in Antony and Cleopatra?", answers: ["Brutus", "Cassius", "Antony", "Octavius"], correct: 2 },
+            { question: "What is the name of Othello’s ensign?", answers: ["Cassio", "Iago", "Roderigo", "Brabantio"], correct: 1 },
+            { question: "Which Shakespeare play is set entirely in a forest?", answers: ["A Midsummer Night’s Dream", "As You Like It", "Both A and B", "Neither"], correct: 2 },
+            { question: "Who is the Duke in Measure for Measure?", answers: ["Vincentio", "Angelo", "Escalus", "Claudio"], correct: 0 },
+            { question: "Which play features the character Dogberry?", answers: ["Much Ado About Nothing", "Twelfth Night", "Love’s Labour’s Lost", "The Comedy of Errors"], correct: 0 },
+            { question: "What is the name of Hamlet’s mother?", answers: ["Gertrude", "Ophelia", "Margaret", "Anne"], correct: 0 },
+            { question: "Which play involves a bet about a wife’s fidelity?", answers: ["Othello", "Cymbeline", "Much Ado About Nothing", "The Winter’s Tale"], correct: 1 },
+            { question: "Who is the villain in Richard III?", answers: ["Buckingham", "Clarence", "Richard", "Hastings"], correct: 2 },
+            { question: "Which play includes witches chanting?", answers: ["Macbeth", "Hamlet", "King Lear", "Othello"], correct: 0 },
+            { question: "What is the name of Juliet’s nurse?", answers: ["Angelica", "She is unnamed", "Margaret", "Susan"], correct: 1 },
+            { question: "Which play features a magical island?", answers: ["The Tempest", "Pericles", "Cymbeline", "The Winter’s Tale"], correct: 0 },
+            { question: "Who murders King Duncan?", answers: ["Lady Macbeth", "Macbeth", "Banquo", "Macduff"], correct: 1 },
+            { question: "What is the name of Lear’s loyal daughter?", answers: ["Goneril", "Regan", "Cordelia", "Margaret"], correct: 2 },
+            { question: "Which play includes a talking skull?", answers: ["Macbeth", "Hamlet", "King Lear", "Othello"], correct: 1 },
+            { question: "Who says “Et tu, Brute?”", answers: ["Caesar", "Antony", "Brutus", "Cassius"], correct: 0 },
+            { question: "What is the name of the Moor in Othello?", answers: ["Cassio", "Iago", "Othello", "Brabantio"], correct: 2 },
+            { question: "Which play involves twins separated at birth?", answers: ["Twelfth Night", "The Comedy of Errors", "Both", "Neither"], correct: 2 },
+            { question: "Who kills Hamlet?", answers: ["Claudius", "Laertes", "Himself", "Fortinbras"], correct: 1 },
+            { question: "Which play features the character Bottom?", answers: ["As You Like It", "A Midsummer Night’s Dream", "Twelfth Night", "Love’s Labour’s Lost"], correct: 1 },
+            { question: "What is the name of the ghost in Hamlet?", answers: ["King Hamlet", "Yorick", "Polonius", "Fortinbras"], correct: 0 },
+            { question: "Which play includes the line “All that glisters is not gold”?", answers: ["Macbeth", "Hamlet", "The Merchant of Venice", "King Lear"], correct: 2 },
+            { question: "Who is the fairy king in A Midsummer Night’s Dream?", answers: ["Puck", "Oberon", "Theseus", "Titania"], correct: 1 },
+            { question: "What is the name of Desdemona’s father?", answers: ["Brabantio", "Montano", "Cassio", "Lodovico"], correct: 0 },
+            { question: "Which play ends with multiple marriages?", answers: ["Twelfth Night", "As You Like It", "A Midsummer Night’s Dream", "All of the above"], correct: 3 },
+            { question: "Who becomes king at the end of Hamlet?", answers: ["Laertes", "Fortinbras", "Claudius", "Horatio"], correct: 1 },
+            { question: "Which play includes the character Timon?", answers: ["Timon of Athens", "Coriolanus", "Julius Caesar", "Antony and Cleopatra"], correct: 0 },
+            { question: "What is the name of Romeo’s cousin?", answers: ["Tybalt", "Mercutio", "Benvolio", "Paris"], correct: 2 },
+            { question: "Which Shakespeare play features a statue coming to life?", answers: ["Cymbeline", "The Winter’s Tale", "Pericles", "The Tempest"], correct: 1 },
+            { question: "Who is the Queen of the Fairies?", answers: ["Portia", "Titania", "Rosalind", "Miranda"], correct: 1 },
+            { question: "Which play is considered Shakespeare’s final solo work?", answers: ["The Tempest", "Henry VIII", "Cymbeline", "The Winter’s Tale"], correct: 0 }
+        ];
+
+        let currentIndex = 0;
+        let score = 0;
+        let timeLeft = 20;
+        let timer;
+
+        function loadQuestion() {
+            if (currentIndex >= quizData.length) return showEnd();
+            
+            clearInterval(timer);
+            timeLeft = 20;
+            document.getElementById('timer').innerText = timeLeft;
+            document.getElementById('current-num').innerText = currentIndex + 1;
+            document.getElementById('feedback-area').classList.add('hidden');
+            document.getElementById('answers-grid').classList.remove('hidden');
+
+            const q = quizData[currentIndex];
+            document.getElementById('question-text').innerText = q.question;
+            const btns = document.querySelectorAll('.answer-btn');
+            btns.forEach((b, i) => {
+                b.innerText = q.answers[i];
+                b.className = 'answer-btn';
+                b.disabled = false;
+            });
+
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = timeLeft;
+                if (timeLeft <= 0) { checkAnswer(-1); }
+            }, 1000);
+        }
+
+        function checkAnswer(idx) {
+            clearInterval(timer);
+            const q = quizData[currentIndex];
+            const btns = document.querySelectorAll('.answer-btn');
+            btns.forEach(b => b.disabled = true);
+
+            if (idx === q.correct) {
+                score += (timeLeft * 10) + 100;
+                document.getElementById('score-display').innerText = score;
+                btns[idx].classList.add('correct-answer');
+                document.getElementById('feedback-message').innerText = "Fairly Played!";
+            } else {
+                if(idx !== -1) btns[idx].classList.add('wrong-answer');
+                btns[q.correct].classList.add('correct-answer');
+                document.getElementById('feedback-message').innerText = "Alas, a Foul!";
+            }
+
+            document.getElementById('answers-grid').classList.add('hidden');
+            document.getElementById('feedback-area').classList.remove('hidden');
+        }
+
+        function loadNextQuestion() {
+            currentIndex++;
+            loadQuestion();
+        }
+
+        function showEnd() {
+            document.getElementById('game-body').classList.add('hidden');
+            document.getElementById('results-screen').classList.remove('hidden');
+            document.getElementById('final-score-text').innerText = "Thy Score: " + score;
+        }
+
+        loadQuestion();
+    </script>
+</body>
+</html>
